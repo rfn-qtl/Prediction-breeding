@@ -136,7 +136,7 @@ genotypes[1:14,1:6]
 metadata
 
 #estimating pop gen parameters, for individuals, markers and subgroups
-population <- popgen(genotypes, subgroups = metadata$Group, plot = TRUE)
+population <- popgen(genotypes, subgroups = metadata$Group, plot = F)
 
 # whole population
 population$whole$Markers[1:14,]
@@ -224,26 +224,29 @@ head(distance2)
 dim(distance2)
 pairLD <- data.frame(marker1 = lds$Var1, marker2 = lds$Var2, r2 = lds$value, dist = distance2$value)
 head(pairLD)
+# eliminating the markers with itself
 pairLD <- pairLD[pairLD$dist != 0,]
+# then, subset only markers with significant LD 
+dt.cor <- function(x, n){
+  dt.calc = dt(sqrt(x) / sqrt((1-x)) * sqrt((n-2)), n) 
+  return(dt.calc)
+  }
+pairLD$p <- dt.cor(pairLD$r2, nrow(M.1))
+head(pairLD)
+pairLD <- pairLD[pairLD$p < 0.001,]
 dim(pairLD)
 
-# a function to convert bp into CM
-pb2cm <- function(x, Gsize.Mp, G.size.cM){
-  aux1 <- x/1E7*Gsize.Mp/G.size.cM 
-  return(aux1)
-}
-
-# estimating the new distance
-pairLD$cM <- pb2cm(pairLD$dist, 2400, 1900)
-head(pairLD)
+# average LD and dist
+apply(na.omit(pairLD[,3:4]), 2, mean)
 
 # and finally the famous graph
 library(ggplot2)
-ld.plot <- ggplot(data = pairLD, aes(y = r2, x = cM)) +  
+ld.plot <- ggplot(data = pairLD, aes(y = r2, x = dist)) +  
   geom_point() +
-  geom_smooth(method = "gam", formula = y ~ x^2) + # the best method is the "loess" method
-  #geom_smooth(method = "loess", color = "blue") +
-  labs(x = 'Distance (cM)', y = expression(r2~(dist^{2}))) +
+  geom_smooth(method = "loess", formula = y ~ x^2) +
+  labs(x = 'Distance (bp)', y = expression(r2~(dist^{2}))) +
+  xlim(0, max(na.omit(pairLD$dist))) +
+  ylim(0, 1) +
   theme_minimal() + 
   theme(axis.text.x = element_text(angle = 90))
 
