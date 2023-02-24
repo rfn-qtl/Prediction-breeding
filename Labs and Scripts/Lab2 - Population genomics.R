@@ -3,7 +3,7 @@
 # Lab 2 - Population genomics
 # Roberto Fritsche-Neto
 # rfneto@agcenter.lsu.edu
-# Last update: November 29 2022
+# Last update: Feb 16 2023
 ##########################
 
 # loading the files
