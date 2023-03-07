@@ -3,7 +3,7 @@
 # Lab 6 - BLUP I, A, Ga, and Ga+Gd
 # Roberto Fritsche-Neto
 # rfneto@agcenter.lsu.edu
-# Last update: Feb 28 2023
+# Last update: Mar 6 2023
 #######################################
 
 #loading phenotypes
@@ -21,10 +21,10 @@ Ga <- readRDS("Ga")
 all(pheno$gid %in% rownames(Ga))
 dim(Ga)
 
-# Loading Ga and Gd
+# Loading Gd
 Gd <- readRDS("Gd")
 all(pheno$gid %in% rownames(Gd))
-dim(Ga)
+dim(Gd)
 
 # GxE Kernells
 (NL <- diag(1, 2)) # two env.: low and ideal N
@@ -89,6 +89,10 @@ unlist(fitGa$sigma)
 # BLUPS
 gebvs <- predict.mmer(fitGa, classify = "gid")$pvals
 head(gebvs, 10)
+# the second way
+fitGa$U$`u:gid`$SDM+as.numeric(fitGa$Beta[1,3])
+# the third way, only GEBVs deviations
+fitGa$U$`u:gid`$SDM
 
 ########################################## model Ga + Gd (Ga and Gd matrices) ##########################
 fitGad <- mmer(fixed = SDM ~ 1 + N,
