@@ -24,14 +24,11 @@ modFD <- mmec(SDM ~ N + rep,
 with(pheno, overlay(female, male, sparse = FALSE))
 
 (suma <- summary(modFD)$varcomp)
-Vgca <- sum(suma[1,1])
+Vgca <- suma[1,1]
 Vsca <- suma[2,1]
 Ve <- suma[3,1]
-Va <- 4*Vgca
-Vd <- 4*Vsca
-Vg <- Va + Vd
-(H2.FD <- Vg / (Vg + (Ve)))
-(h2.FD <- Va / (Vg + (Ve)))
+(H2.FD <- (Vgca+Vsca) / (Vgca+Vsca+Ve))
+(h2.FD <- Vgca / (Vgca+Vsca+Ve))
 
 # CGA and SCA
 (CAE.FD <- data.frame(gid = rownames(modFD$u),
@@ -53,14 +50,11 @@ modHD <- mmec(SDM ~ N + rep,
               verbose = FALSE)
 
 (suma <- summary(modHD)$varcomp)
-Vgca <- sum(suma[1:2,1])
-Vsca <- suma[3,1]
-Ve <- suma[4,1]
-Va <- 4*Vgca
-Vd <- 4*Vsca
-Vg <- Va + Vd
-(H2.HD <- Vg / (Vg + (Ve)))
-(h2.HD <- Va / (Vg + (Ve)))
+Vgca <- suma[1,1]
+Vsca <- suma[2,1]
+Ve <- suma[3,1]
+(H2.HD <- (Vgca+Vsca) / (Vgca+Vsca+Ve))
+(h2.HD <- Vgca / (Vgca+Vsca+Ve))
 
 # CGA and SCA
 (CAE.HD <- data.frame(gid = rownames(modHD$u)[modHD$u != 0],
@@ -98,14 +92,11 @@ modHDG <- mmer(SDM ~ N + rep,
               verbose = FALSE)
 
 (suma <- summary(modHDG)$varcomp)
-Vgca <- sum(suma[1:2,1])
-Vsca <- suma[3,1]
-Ve <- suma[4,1]
-Va <- 4*Vgca
-Vd <- 4*Vsca
-Vg <- Va + Vd
-(H2.HDG <- Vg / (Vg + (Ve)))
-(h2.HDG <- Va / (Vg + (Ve)))
+Vgca <- suma[1,1]
+Vsca <- suma[2,1]
+Ve <- suma[3,1]
+(H2.HDG <- (Vgca+Vsca) / (Vgca+Vsca+Ve))
+(h2.HDG <- Vgca / (Vgca+Vsca+Ve))
 
 # CGA and SCA
 (CAE.HDG <- data.frame(gid = names(c(modHDG$U$`u:female`$SDM, modHDG$U$`u:male`$SDM, modHDG$U$`u:gid`$SDM)),
