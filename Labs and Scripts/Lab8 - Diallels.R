@@ -50,7 +50,7 @@ modHD <- mmec(SDM ~ N + rep,
               verbose = FALSE)
 
 (suma <- summary(modHD)$varcomp)
-Vgca <- suma[1,1]
+Vgca <- mean(suma[1:2,1])
 Vsca <- suma[2,1]
 Ve <- suma[3,1]
 (H2.HD <- (Vgca+Vsca) / (Vgca+Vsca+Ve))
@@ -83,7 +83,7 @@ Gd <- readRDS("Gd")
 Gd <- Gd[15:ncol(Gd), 15:ncol(Gd)]
 dim(Gd)
 
-# running the model - pay attnetion tha now is via mmer
+# running the model - pay attention the analysis now is via mmer
 modHDG <- mmer(SDM ~ N + rep,
               random= ~ vsr(female, Gu = Ga.f) + vsr(male, Gu = Ga.m) + vsr(gid, Gu = Gd),
               rcov = ~vsr(units), 
@@ -92,7 +92,7 @@ modHDG <- mmer(SDM ~ N + rep,
               verbose = FALSE)
 
 (suma <- summary(modHDG)$varcomp)
-Vgca <- suma[1,1]
+Vgca <- mean(suma[1:2,1])
 Vsca <- suma[2,1]
 Ve <- suma[3,1]
 (H2.HDG <- (Vgca+Vsca) / (Vgca+Vsca+Ve))
@@ -117,9 +117,10 @@ abline(lm(CAE.HDG[, 2] ~ CAE.HD[, 2]), col = "red")
 
 # For that we need to run a full diallel using G matrices
 Ga <- readRDS("Ga")
+# Let's create the SCA matrix - only the parents
 Gd.mf <- kronecker(Ga[1:14, 1:14], Ga[1:14, 1:14])
 dim(Gd.mf)
-Gd.mf[1:5, 1:5]
+Gd.mf[1:5, 1:5] # SCA
 
 # colnames for Gd.mf
 out <- c()
@@ -137,6 +138,7 @@ colnames(Gd.mf) <- rownames(Gd.mf) <- out
 Gd.mf[1:5, 1:5]
 pheno$gid %in% colnames(Gd.mf)
 
+# model full diallel
 modFDG <- mmer(SDM ~ N + rep,
                random= ~ vsr(female, Gu = Ga) + vsr(male, Gu = Ga) + vsr(gid, Gu = Gd.mf),
                rcov = ~vsr(units), 
@@ -148,6 +150,7 @@ modFDG <- mmer(SDM ~ N + rep,
 SCA <- data.frame(gid = names(modFDG$U$`u:gid`$SDM), SCA = modFDG$U$`u:gid`$SDM)
 SCA <- merge(SCA, aux2)
 head(SCA)
+tail(SCA)
 SCA <- SCA[,2:4]
 
 library(reshape2)
