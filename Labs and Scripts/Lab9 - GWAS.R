@@ -145,7 +145,7 @@ kable(qtl)
 
 # when you have more than one significant marker, we need to run a multiple linear regression
 # for that, use all the significant marker together
-fit.lm.data <- data.frame(blues = Y[,3], M[,qtl$SNP])
+fit.lm.data <- data.frame(blues = Y[,3], M[,as.character(qtl$SNP)])
 colnames(fit.lm.data)[2:ncol(fit.lm.data)] <- qtl$SNP
 head(fit.lm.data)
 str(fit.lm.data)
