@@ -3,7 +3,7 @@
 # Lab 9 - GWAS
 # Roberto Fritsche-Neto
 # rfneto@agcenter.lsu.edu
-# Last update: Dec 5 2022
+# Last update: March 30 2023
 #######################################
 
 # loading phenotypes
