@@ -3,7 +3,7 @@
 # Lab 9 - GWAS
 # Roberto Fritsche-Neto
 # rfneto@agcenter.lsu.edu
-# Last update: March 30 2023
+# Last update: April 3 2023
 #######################################
 
 # loading phenotypes
@@ -66,7 +66,7 @@ myY <- Y[,c(1, 6)] # using dBLUPs because there is no space to add weights in th
 head(myY)
 
 myGD <- M2
-head(myGD)
+myGD[1:5, 1:5]
 
 myGM <- hapmap
 head(hapmap)
@@ -78,6 +78,7 @@ args(FarmCPU)
 
 model.K <- FarmCPU(Y = myY, GD = myGD, GM = myGM, cutOff = 0.05, p.threshold = 0.05/nrow(myGM), MAF.calculate = T)
 head(model.K$GWAS)
+# To bypass the package in terms of kinship, you can create a diagonal matrix and feed the model
 
 model.PC1 <- FarmCPU(Y = myY, GD = myGD, GM = myGM, CV = myCV[,1], cutOff = 0.05, p.threshold = 0.05/nrow(myGM), MAF.calculate = T)
 
@@ -85,7 +86,7 @@ model.PC2 <- FarmCPU(Y = myY, GD = myGD, GM = myGM, CV = myCV[,1:2], cutOff = 0.
 
 ############################   identifying the real p.threshold value for our data   ########################
 args(FarmCPU.P.Threshold)
-p.adj <- FarmCPU.P.Threshold(Y = myY, GD = myGD, GM = myGM, trait = "blues", theRep = 10)
+p.adj <- FarmCPU.P.Threshold(Y = myY, GD = myGD, GM = myGM, trait = "dblups", theRep = 10)
 p.adj #the real p.threshold value for our data
 (p.Bonf <- 0.05/ncol(M)) # p by Bonferroni
 
@@ -94,6 +95,9 @@ p.adj #the real p.threshold value for our data
 -log10(p.Bonf) #threshold by Bonferroni
 
 ############################    running again but using the newest threshold   ###########################
+
+# see to replace the kinship with a diag
+
 model.p.adj <- FarmCPU(Y = myY, GD = myGD, GM = myGM, p.threshold = p.adj, threshold.output = p.adj, MAF.calculate = TRUE, cutOff = c((p.adj*ncol(M)), 0.05))
 
 # combining all outputs via different models
@@ -135,17 +139,16 @@ for(i in 1:length(qtl$SNP)) {
   print(kable(table(M[,qtl$SNP[i]])))
 }
 
-
 # heritability and R2
 qtl$Va <- round(2 * qtl$maf * (1 - qtl$maf) * qtl$effect^2, 3)
-qtl$ha <- round(qtl$Va / var(Y$blues), 2)
+qtl$ha <- round(qtl$Va / var(Y$dblups), 2)
 qtl$Ac <- round(sqrt(qtl$ha), 2)
 qtl$R2 <- qtl$ha^2
 kable(qtl)
 
 # when you have more than one significant marker, we need to run a multiple linear regression
 # for that, use all the significant marker together
-fit.lm.data <- data.frame(blues = Y[,3], M[,as.character(qtl$SNP)])
+fit.lm.data <- data.frame(dblups = Y[,6], M[,as.character(qtl$SNP)])
 colnames(fit.lm.data)[2:ncol(fit.lm.data)] <- qtl$SNP
 head(fit.lm.data)
 str(fit.lm.data)
@@ -153,14 +156,15 @@ fit.lm.data <- droplevels.data.frame(fit.lm.data)
 str(fit.lm.data)
 
 # finally, run the multiple regression
-fi.lm <- lm(blues ~ ., fit.lm.data)
+fi.lm <- lm(dblups ~ ., fit.lm.data)
+#, we would need to add Q + K to make a better estimation. We could do it using sommer.
 summary(fi.lm)
 fi.lm$coefficients
 anova(fi.lm)
 
 # estimating breeding values based on significant markers
 bv <- matrix(M[, qtl$SNP]) %*% qtl$effect
-cor(bv, Y$blues)
+cor(bv, Y$dblups)
 
 ######################################## LD.plot for annotation ##################################
 library(SNPRelate)
