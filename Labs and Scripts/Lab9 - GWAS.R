@@ -3,7 +3,7 @@
 # Lab 9 - GWAS
 # Roberto Fritsche-Neto
 # rfneto@agcenter.lsu.edu
-# Last update: April 3 2023
+# Last update: April 4 2023
 #######################################
 
 # loading phenotypes
@@ -148,19 +148,35 @@ kable(qtl)
 
 # when you have more than one significant marker, we need to run a multiple linear regression
 # for that, use all the significant marker together
-fit.lm.data <- data.frame(dblups = Y[,6], M[,as.character(qtl$SNP)])
-colnames(fit.lm.data)[2:ncol(fit.lm.data)] <- qtl$SNP
+
+fit.lm.data <- data.frame(dblups = Y[,6],
+                          gid = M2[,1],
+                          PC1 = PCA[,1], 
+                          PC2 = PCA[,2],
+                          PC3 = PCA[,3], 
+                          M[,as.character(qtl$SNP)])
+
+colnames(fit.lm.data)[6:ncol(fit.lm.data)] <- paste0("SNP", 1:nrow(qtl))
 head(fit.lm.data)
 str(fit.lm.data)
+fit.lm.data$gid <- as.factor(fit.lm.data$gid ) 
 fit.lm.data <- droplevels.data.frame(fit.lm.data)
 str(fit.lm.data)
 
 # finally, run the multiple regression
-fi.lm <- lm(dblups ~ ., fit.lm.data)
-#, we would need to add Q + K to make a better estimation. We could do it using sommer.
-summary(fi.lm)
-fi.lm$coefficients
-anova(fi.lm)
+library(sommer)
+fit.mlm <- mmer(dblups ~ PC1 + PC2, # add the number of PCs you used in the GWAS
+               random= ~ vsr(gid, Gu = Ga) + SNP1, # add all the significant SNPs in the model
+               rcov = ~vsr(units), 
+               nIters = 3,
+               data = fit.lm.data, 
+               verbose = FALSE)
+
+# the components of variance
+summary(fit.mlm)$varcomp
+# and the adjusted heritability - the proportion that each SNP explain in total variance
+(h_snp <- vpredict.mmer(fit.mlm, H ~ V2 / (V1 + V2 + V3)))
+# if you have more than one SNP, you can sum their components (V's) and estimate how much they explain together
 
 # estimating breeding values based on significant markers
 bv <- matrix(M[, qtl$SNP]) %*% qtl$effect
