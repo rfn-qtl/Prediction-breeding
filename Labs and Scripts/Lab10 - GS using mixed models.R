@@ -3,7 +3,7 @@
 # Lab 10 - GS using mixed models
 # Roberto Fritsche-Neto
 # rfneto@agcenter.lsu.edu
-# Last update: Dec 8 2022
+# Last update: April 10 2023
 #######################################
 
 # loading data
@@ -59,7 +59,8 @@ for (r in 1:replicates) {
                   data = YGS)
   
     # predicting and reorganizing the BLUPS
-    BLUPS <- predict.mmer(sol, classify = "gid")$pvals
+    BLUPS <- data.frame(gid = names(sol$U$`u:gid`$dblups),
+                        GEBV = sol$U$`u:gid`$dblups)
     predicted.blups <- BLUPS[BLUPS$gid %in% YGS$gid[itest], ]
     observed.blues <- Y[Y$gid %in% YGS$gid[itest],]
     observed.blues <- observed.blues[match(predicted.blups$gid, observed.blues$gid),]
@@ -69,16 +70,13 @@ for (r in 1:replicates) {
       rep = r,
       fold = k,
       h2m = round(as.numeric(vpredict(sol, h2 ~ V1 / (V1 + V2))[1]), 2),
-      PA = round(cor(predicted.blups[, 3], observed.blues[, 6]), 2),
+      PA = round(cor(predicted.blups[, 2], observed.blues[, 6]), 2),
       BIC = sol$BIC
       )
     )
     
-    # retrieving only the genetic deviations
-    blups <- data.frame(gid = names(sol$U$`u:gid`$dblups),
-                                 GEBV = sol$U$`u:gid`$dblups)
-    
-    GEBVs <- rbind(GEBVs, blups)
+    # storage genetic breeding estimated values
+    GEBVs <- rbind(GEBVs, BLUPS)
     
   }
 }
@@ -86,7 +84,9 @@ for (r in 1:replicates) {
 
 # estimate the KPI mean
 head(output_A)
+tail(output_A)
 (resultA <- apply(output_A[,4:6], 2, mean)) 
+(resultA <- apply(output_A[,4:6], 2, sd)) 
 
 # and looking at the distribution
 library(ggplot2)
@@ -130,7 +130,7 @@ vg <- 2*sum(apply(M, 2, vpq))
 a <- t(M) %*% solve(Ga) %*% GEBVs / vg
 
 all(rownames(a) == colnames(M))
-colnames(a) <- "marker effect"
+colnames(a) <- "marker_effect"
 head(a)
 dim(a)
 
@@ -138,7 +138,7 @@ dim(a)
 rrblup.gbv <- M %*% a
 colnames(rrblup.gbv) <- "RR-BLUP" 
 head(rrblup.gbv)
-(pho <- round(cor(GEBVs, rrblup.gbv),2))
+(pho <- round(cor(GEBVs, rrblup.gbv), 4))
 
 joint <- data.frame(gid = Y$gid, GBLUP = GEBVs, RRBLUP = rrblup.gbv)
 head(joint)
@@ -154,7 +154,9 @@ nfold <- 5 # training and validation sizes
 replicates <- 5 # repeat this procedure 5 times
 
 # add a column to model the dominance
+head(Y)
 Y$gidD <- Y$gid
+head(Y)
 
 output_AD <- data.frame() # create an empty file to storage KPI
 GEGVs <- data.frame() # create an empty file to GEBV
@@ -187,7 +189,7 @@ for (r in 1:replicates) {
                         A = sol$U$`u:gid`$blues,
                         D = sol$U$`u:gidD`$blues,
                         GV = sol$U$`u:gid`$blues + sol$U$`u:gidD`$blues)
-    
+  
     predicted.blups <- blups[blups$gid %in% YGS$gid[itest], ]
     observed.blues <- Y[Y$gid %in% YGS$gid[itest],]
     observed.blues <- observed.blues[match(predicted.blups$gid, observed.blues$gid),]
@@ -197,8 +199,8 @@ for (r in 1:replicates) {
       rep = r,
       fold = k,
       h2m = round(as.numeric(vpredict(sol, h2 ~ V1 / (V1 + V2 + V3))[1]), 2),
-      h2mAD = round(as.numeric(vpredict(sol, h2 ~ (V1 +V2) / (V1 + V2 + V3))[1]), 2),
-      PA = round(cor(predicted.blups[, 3], observed.blues[, 3]), 2),
+      h2mAD = round(as.numeric(vpredict(sol, h2 ~ (V1 + V2) / (V1 + V2 + V3))[1]), 2),
+      PA = round(cor(predicted.blups[, 4], observed.blues[, 3]), 2),
       BIC = sol$BIC
     )
     )
@@ -249,7 +251,9 @@ for (i in 1:length(OTS)) {
                data = YGS)
   
   # predicting and reorganizing the BLUPS
-  BLUPS <- predict.mmer(sol, classify = "gid")$pvals
+  BLUPS <- data.frame(gid = names(sol$U$`u:gid`$blues),
+                      A = sol$U$`u:gid`$blues)
+  
   predicted.blups <- BLUPS[BLUPS$gid %in% YGS$gid[itest], ]
   observed.blues <- Y[Y$gid %in% YGS$gid[itest],]
   observed.blues <- observed.blues[match(predicted.blups$gid, observed.blues$gid),]
@@ -259,7 +263,7 @@ for (i in 1:length(OTS)) {
     rep = names(OTS)[i],
     fold = names(OTS)[i],
     h2m = round(as.numeric(vpredict(sol, h2 ~ V1 / (V1 + V2))[1]), 2),
-    PA = round(cor(predicted.blups[, 3], observed.blues[, 3]), 2),
+    PA = round(cor(predicted.blups[, 2], observed.blues[, 3]), 2),
     BIC = sol$BIC))
   
 }
