@@ -3,18 +3,19 @@
 # Lab 12 - GxE
 # Roberto Fritsche-Neto
 # rfneto@agcenter.lsu.edu
-# Last update: April 18 2023
+# Last update: April 24 2023
 ##########################
 
 #################################### MET analysis #########################
 library(sommer)
 pheno <- readRDS("pheno")
+head(pheno)
 blocks <- length(unique(pheno$rep))
 loc <- length(unique(pheno$N))
 
-# Fitting genotype by environment models - with a common variance (diagnonal model)
+# Fitting genotype by environment models - with a common variance (diagonal model)
 fitMET <- mmer(fixed = SDM ~ 1 + N,
-                       random = ~gid + rep + gid:N,
+                       random = ~ gid + rep + gid:N,
                        rcov = ~ vsr(units),
                        data = pheno)
 
@@ -55,10 +56,21 @@ anova(fitMET.US, fitMET.US.H)
 BLUPS <- data.frame(
   MET = fitMET$U$gid$SDM,
   US = fitMET.US$U$gid$SDM,
-  USH = fitMET.US.H$U$gid)
+  USH = fitMET.US.H$U$gid$SDM)
 
 head(BLUPS)
 cor(BLUPS)
+
+# If you want to include ERM and GRM into your model
+#GxE <- kronecker(ERM, Ga)
+#pheno$GN <- paste(pheno$gid, pheno$N)
+
+# Fitting genotype by environment models - with a kernels (GRM and ERM)
+#fitMET <- mmer(fixed = SDM ~ 1 + rep,
+#               random = ~ vsr(N, ERM) + vsr(gid, Ga) + vsr(GN, GxE),
+#               rcov = ~ vsr(units),
+#               data = pheno)
+
 
 ####################### Stability and adaptability - Finlay-Wilkinson #########################
 # remotes::install_github("Biometris/statgenGxE", ref = "develop", dependencies = TRUE)
@@ -74,6 +86,9 @@ summary(dropsFW)
 
 # let's take a look at the output
 names(dropsFW)
+dropsFW$estimates
+dropsFW$envEffs
+dropsFW$fittedGeno
 
 ## Create line plot for Finlay Wilkinson analysis.
 plot(dropsFW, plotType = "line")
@@ -82,6 +97,8 @@ plot(dropsFW, plotType = "line")
 library(metan)
 
 model.gge <- gge(pheno, N, gid, SDM, svp = "symmetrical")
+
+model.gge$SDM
 
 (a <- plot(model.gge, type = 1)) # basic plot
 (b <- plot(model.gge, type = 2)) # Mean performance vs. stability
