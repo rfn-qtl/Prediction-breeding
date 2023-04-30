@@ -23,6 +23,9 @@ summary(fitMET)
 # Broad-sense heritability
 vpredict(fitMET, h2 ~ V1 / ( V1 + V3/loc + V4/(loc*blocks) ) ) # trials level
 vpredict(fitMET, h2 ~ V1 / ( V1 + V3 + V4 ) ) # plot level
+diag(fitMET$PevU$gid$SDM)
+# predicting the overal performance
+predict.mmer(fitMET, D="gid")$pvals
 
 
 # Fitting genotype by environment models - unstructured model (US)
@@ -33,8 +36,8 @@ fitMET.US <- mmer(fixed = SDM ~ 1 + N,
 summary(fitMET.US)
 
 # Broad-sense heritability
-vpredict(fitMET.US, h2 ~ V1 / ( V1 + (V4)/loc + V6/(loc*blocks) ) ) # trials level
-vpredict(fitMET.US, h2 ~ V1 / ( V1 + (V4) + V6 ) ) # plot level
+vpredict(fitMET.US, h2 ~ (V3 + V5) / ( V3 + V5 + (V4)/loc + V6/(loc*blocks) ) ) # trials level
+vpredict(fitMET.US, h2 ~ V3 / (V3 + (V4) + V6/blocks ) ) # ideal N level
 
 
 # Fitting genotype by environment models - unstructured model (US) + heterogeneous variance
@@ -45,14 +48,15 @@ fitMET.US.H <- mmer(fixed = SDM ~ 1 + N,
 
 summary(fitMET.US.H)
 # Broad-sense heritability
-vpredict(fitMET.US.H, h2 ~ V1 / ( V1 + (V4)/loc + (V6+V7)/(loc*blocks) ) ) # trials level
-vpredict(fitMET.US.H, h2 ~ V1 / ( V1 + (V4) + (V6+V7) ) ) # plot level
+vpredict(fitMET.US.H, h2 ~ (V3 + V5) / ( V3 + V5 + (V4)/loc + (V6 + V7)/(loc*blocks) ) ) # trials level
+vpredict(fitMET.US.H, h2 ~ V3 / (V3 + (V4) + V6/blocks ) ) # ideal N level
+
 
 # comparing the models
 anova(fitMET, fitMET.US)
 anova(fitMET.US, fitMET.US.H)
 
-# predicting BLUPs per environment
+# predicting overall BLUPs across environment
 BLUPS <- data.frame(
   MET = fitMET$U$gid$SDM,
   US = fitMET.US$U$gid$SDM,
@@ -61,6 +65,12 @@ BLUPS <- data.frame(
 head(BLUPS)
 cor(BLUPS)
 
+# to predict BLUPs per environment, we need to sum the main effect and the interaction for that specific case 
+# For instance, G in ideal N
+fitMET.US.H$U$gid$SDM + fitMET.US.H$U$`ideal:gid`$SDM
+
+
+################## ERM kernels ####################### 
 # If you want to include ERM and GRM into your model
 #GxE <- kronecker(ERM, Ga)
 #pheno$GN <- paste(pheno$gid, pheno$N)
