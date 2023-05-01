@@ -6,6 +6,9 @@
 # Last update: Feb 9 2023
 #######################################
 
+#install.packages("R6")
+#install.packages("AlphaSimR")
+
 (start.time <- Sys.time())
 require(AlphaSimR)
 require(foreach)
@@ -73,9 +76,11 @@ firstPop <- newPop(rawPop = history, isDH = TRUE, simParam = SP)
 # select the first parents, full inbreed
 set.seed(29121983)
 
+
 founders <- selectInd(firstPop, nInd = n.parents, trait = 1, use = "pheno", gender = "B",
                  selectTop = TRUE, returnPop = TRUE, candidates = NULL,
                  simParam = SP)
+
 
 #############################################################
 # simulating 3 generations of rice trad breeding == burn-in
@@ -180,6 +185,7 @@ nSelF7 <- 1
 
 results.current.trad <- foreach(k = r, 
                        .packages = c("AlphaSimR"), 
+                       .export = c("randCross","self", "meanG", "gv", "varA", "selectInd", "mergePops", "setEBV", "RRBLUP2"),
                        .combine = "rbind", 
                        .multicombine = TRUE, 
                        .errorhandling = "remove",
@@ -246,6 +252,7 @@ cat("Drift", "\n")
 results.current.drift <- foreach(k = r, 
                                 .packages = c("AlphaSimR"), 
                                 .combine = "rbind", 
+                                .export = c("randCross","self", "meanG", "gv", "varA", "selectInd", "mergePops", "setEBV", "RRBLUP2"),
                                 .multicombine = TRUE, 
                                 .errorhandling = "remove",
                                 .verbose = TRUE
@@ -319,6 +326,7 @@ nSelF6 <- 1
 results.gshtp <- foreach(k = r, 
                           .packages = c("AlphaSimR"), 
                           .combine = "rbind", 
+                         .export = c("randCross","self", "meanG", "gv", "varA", "selectInd", "mergePops", "setEBV", "RRBLUP2"),
                           .multicombine = TRUE, 
                           .errorhandling = "remove",
                           .verbose = TRUE
