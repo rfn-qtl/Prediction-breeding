@@ -3,16 +3,12 @@
 # Lab 13 - Creating and comparing breeding schemes
 # Roberto Fritsche-Neto
 # rfneto@agcenter.lsu.edu
-# Last update: Feb 9 2023
+# Last update: May 8 2023
 #######################################
-
 #install.packages("R6")
 #install.packages("AlphaSimR")
-
 (start.time <- Sys.time())
 require(AlphaSimR)
-require(foreach)
-require(doParallel)
 
 #################### Parameters ##############
 nQTL <- 360
@@ -20,7 +16,6 @@ add <- 0.22
 segSites <- 1644
 chip.size.1 <- 540
 replicates <- 18 # usually the number must be near to 100
-r <- 1:replicates
 cycles <- 20 # it is important define your breeding horizon
 
 # Heritabilities by breeding stage
@@ -32,12 +27,6 @@ H2 <- c(0.06, 0.20, 0.45, 0.63, 0.72, 0.81)
 n.parents <- 40
 n.crosses <- 160
 progenie.size <- 100
-
-# setting the number of cores that will be used
-detectCores()
-nThreads <- detectCores()-1
-registerDoParallel(cores = nThreads) # type the number of cores you want to use
-getDoParWorkers()
 
 ###########################
 # crop history of evolution
@@ -54,9 +43,6 @@ history <- runMacs(nInd = 1000,
 
 # then, add the simulation parameters to the simulated population
 SP = SimParam$new(history)
-
-# nThreads per replicate. set == 1 tp avoid overlap between jobs
-SP$nThreads = 1L 
 
 # Lets add a trait, considering gamma distribution for QTL effect;  A + D effects
 SP$restrSegSites(nQTL/12, chip.size.1/12)
@@ -183,19 +169,15 @@ nSelF5 <- 160
 nSelF6 <- 40
 nSelF7 <- 1
 
-results.current.trad <- foreach(k = r, 
-                       .packages = c("AlphaSimR"), 
-                       .export = c("randCross","self", "meanG", "gv", "varA", "selectInd", "mergePops", "setEBV", "RRBLUP2"),
-                       .combine = "rbind", 
-                       .multicombine = TRUE, 
-                       .errorhandling = "remove",
-                       .verbose = TRUE
-) %dopar% { 
+results.current.trad <- data.frame()
+
+for(k in 1:replicates){
   
   pop.base <- pop.trad
-  output <- data.frame()
   
   for (i in 1:cycles) {
+    
+    cat("running cycle", i, "in replicate", k, "\n")
 
     f1 <- randCross(pop = pop.base, nCrosses = n.crosses, nProgeny = 1, simParam = SP)
     # setting the heritability of the trait, narrow and broad sense
@@ -230,7 +212,7 @@ results.current.trad <- foreach(k = r,
     newparents <- f6
     pop.base <- newparents
 
-    output <- rbind(output, data.frame(
+    results.current.trad <- rbind(results.current.trad, data.frame(
       method = "Current_Trad",
       rep = k,
       cycle = i,
@@ -240,7 +222,6 @@ results.current.trad <- foreach(k = r,
       Years = 5
       ))
   }
-  return(output)
 }
 
 
@@ -249,19 +230,15 @@ results.current.trad <- foreach(k = r,
 #########################################################################
 cat("Drift", "\n")
 
-results.current.drift <- foreach(k = r, 
-                                .packages = c("AlphaSimR"), 
-                                .combine = "rbind", 
-                                .export = c("randCross","self", "meanG", "gv", "varA", "selectInd", "mergePops", "setEBV", "RRBLUP2"),
-                                .multicombine = TRUE, 
-                                .errorhandling = "remove",
-                                .verbose = TRUE
-) %dopar% {
+results.current.drift <- data.frame()
+
+for(k in 1:replicates){
   
   pop.base <- pop.trad
-  output <- data.frame()
   
   for (i in 1:cycles) {
+    
+    cat("running cycle", i, "in replicate", k, "\n")
     
     f1 <- randCross(pop = pop.base, nCrosses = n.crosses, nProgeny = 1, simParam = SP)
     
@@ -297,7 +274,7 @@ results.current.drift <- foreach(k = r,
     newparents <- f6
     pop.base <- newparents
     
-    output <- rbind(output, data.frame(
+    results.current.drift <- rbind(results.current.drift, data.frame(
       method = "Drift",
       rep = k,
       cycle = i,
@@ -307,7 +284,6 @@ results.current.drift <- foreach(k = r,
       Years = 5
     ))
   }
-  return(output)
 }
 
 
@@ -323,22 +299,18 @@ nSelF4 <- 480
 nSelF5 <- 40
 nSelF6 <- 1
 
-results.gshtp <- foreach(k = r, 
-                          .packages = c("AlphaSimR"), 
-                          .combine = "rbind", 
-                         .export = c("randCross","self", "meanG", "gv", "varA", "selectInd", "mergePops", "setEBV", "RRBLUP2"),
-                          .multicombine = TRUE, 
-                          .errorhandling = "remove",
-                          .verbose = TRUE
-) %dopar% {
+results.gshtp <- data.frame()
+
+for(k in 1:replicates){
   
   pop.base <- pop.trad
-  output <- data.frame()
   TS <- TS000
   popList <- list(TS)
   snps <- markers
   
   for (i in 1:cycles) {
+    
+    cat("running cycle", i, "in replicate", k, "\n")
     
     f1 <- randCross(pop = pop.base, nCrosses = n.crosses, nProgeny = 1, simParam = SP)
     
@@ -383,7 +355,7 @@ results.gshtp <- foreach(k = r,
     newparents <- f5
     pop.base <- newparents
     
-    output <- rbind(output, data.frame(
+    results.gshtp <- rbind(results.gshtp, data.frame(
       method = "GS.F2_HTP.F3",
       rep = k,
       cycle = i,
@@ -393,7 +365,6 @@ results.gshtp <- foreach(k = r,
       Years = 3
     ))
   }
-  return(output)
 }
 
 
